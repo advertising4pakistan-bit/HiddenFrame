@@ -1,4 +1,4 @@
-name: Hidden Frame Build
+name: Hidden Frame Build Diagnostic
 
 on:
   workflow_dispatch:
@@ -20,16 +20,25 @@ jobs:
       - name: Unzip Android project
         run: unzip -o HiddenFrame_AndroidProject.zip -d project
 
-      - name: Make gradlew executable
-        working-directory: project
-        run: chmod +x gradlew
+      - name: List all project files
+        run: ls -R project
 
-      - name: Build APK
-        working-directory: project
-        run: ./gradlew clean assembleDebug --stacktrace
+      - name: Build using gradlew (auto-detect)
+        run: |
+          cd project
+          GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1)
+          echo "🔍 Found gradlew at: $GRADLEW_PATH"
+          chmod +x "$GRADLEW_PATH"
+          cd "$(dirname "$GRADLEW_PATH")"
+          echo "🏗️ Running Gradle build..."
+          ./gradlew clean assembleDebug --stacktrace || (echo "❌ Build failed!" && exit 1)
+          echo "✅ Build completed!"
 
-      - name: Upload generated APK
+      - name: Show APK search results
+        run: find project -type f -name "*.apk" || echo "⚠️ No APK files found!"
+
+      - name: Upload APK (auto-detect)
         uses: actions/upload-artifact@v4
         with:
           name: HiddenFrame-debug.apk
-          path: '**/app/build/outputs/apk/debug/*.apk'
+          path: '**/*.apk'
