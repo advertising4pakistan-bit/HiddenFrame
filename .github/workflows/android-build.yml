@@ -1,0 +1,35 @@
+name: Hidden Frame Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Unzip Android project
+        run: unzip -o HiddenFrame_AndroidProject.zip -d project
+
+      - name: Make gradlew executable
+        working-directory: project
+        run: chmod +x gradlew
+
+      - name: Build APK
+        working-directory: project
+        run: ./gradlew clean assembleDebug --stacktrace
+
+      - name: Upload generated APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HiddenFrame-debug.apk
+          path: '**/app/build/outputs/apk/debug/*.apk'
